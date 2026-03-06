@@ -1,0 +1,12 @@
+# Покрытие тестами
+.coverage
+.coveragerc
+htmlcov/
+
+# Кэш Python
+*.pyc
+__pycache__/
+
+# Настройки IDE (если есть)
+.vscode/
+.idea/
