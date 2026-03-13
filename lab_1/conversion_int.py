@@ -24,7 +24,7 @@ class IntegerNumber:
     def conversion_to_binary_inversion(n):
         bits = IntegerNumber.conversion_to_binary_straight(abs(n))
 
-        if n > 0:
+        if n >= 0:
             return bits
 
         for i in range(32):
@@ -35,7 +35,7 @@ class IntegerNumber:
     @staticmethod
     def conversion_to_binary_additional(n):
 
-        if n > 0:
+        if n >= 0:
             return IntegerNumber.conversion_to_binary_straight(n)
 
         bits = IntegerNumber.conversion_to_binary_inversion(n)
