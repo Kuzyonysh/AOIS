@@ -21,9 +21,8 @@ def tt_expr():
 
 def test_boolean_function_evaluate():
     bf = BooleanFunction("a & b")
-    assert bf.evaluate({"a": 1, "b": 1}) is True
-    assert bf.evaluate({"a": 1, "b": 0}) is False
-
+    assert bf.evaluate({"a": True, "b": True}) is True
+    assert bf.evaluate({"a": True, "b": False}) is False
 
 def test_boolean_function_prepare():
     bf = BooleanFunction("a -> b")
@@ -211,7 +210,7 @@ def test_is_redundant_true():
 
     terms = cm.get_terms()
 
-    # создаём ситуацию конкуренции покрытий
+   
     if len(terms) > 1:
         cm.is_redundant(terms[0], terms)
 
