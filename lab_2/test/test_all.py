@@ -24,6 +24,7 @@ def tt_multivars():
 @pytest.fixture
 def tt_sknf():
     return TruthTable("a | b")
+
 def test_boolean_function_evaluate():
     bf = BooleanFunction("a & b")
     assert bf.evaluate({"a": True, "b": True}) is True
@@ -109,7 +110,6 @@ def test_fictitious_with_tautology():
     fv = FictitiousVariables(tt)
     res = fv.find_fictitious()
     assert isinstance(res, list)
-
 def test_get_terms_dnf(tt):
     cm = CalculationMethod(tt, form="dnf")
     terms = cm.get_terms()
@@ -300,6 +300,7 @@ def test_post_classes(tt):
     res = pc.check_all()
     assert isinstance(res, dict)
     assert "T0" in res
+
 def test_normal_forms(tt_expr):
     nf = NormalForms(tt_expr)
     sdnf = nf.build_sdnf()
@@ -360,3 +361,11 @@ def test_evaluate_with_steps():
 def test_truth_table_multivars(tt_multivars):
     table = tt_multivars.generate()
     assert len(table) == 8
+def test_simplify_partial_derivative():
+    tt = TruthTable("a & b")
+    bd = BooleanDerivative(tt)
+    
+    simplified = bd.simplify_derivative(var="a")
+    assert simplified == "(!b)" or simplified == "(b)"  
+    simplified = bd.simplify_derivative(var="b")
+    assert "a" in simplified or "!a" in simplified
