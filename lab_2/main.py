@@ -74,19 +74,23 @@ def main():
             print("\nПеременные:", ", ".join(tt.variables))
             var = input("Введите переменную для производной: ")
             vector, formula = bd.partial_with_formula(var)
+            simplified = bd.simplify_derivative(var)
             print("\n--- Частная производная ---")
             print("Вектор:", vector)
-            print("Формула:", formula)
+            print("Формула:", simplified)
             
         elif choice == "9":
             bd = BooleanDerivative(tt)
             print("\nПеременные:", ", ".join(tt.variables))
-            vars_list = input("Введите переменные через пробел: ").split()
+            vars_input = input("Введите переменные для смешанной производной (через пробел): ")
+            vars_list = vars_input.split()
+    
             vector, formula = bd.mixed_derivative(vars_list)
+    
             print("\n--- Смешанная производная ---")
-            print("Переменные:", vars_list)
+            derivative_str = "∂" + "".join(vars_list) + "f/∂" + "∂".join(vars_list)
             print("Вектор:", vector)
-            print("Формула:", formula)
+            print("Формула:", bd.simplify_derivative(vars_list=vars_list))
             
         elif choice == "10":
             print("\nВыберите форму минимизации:")
