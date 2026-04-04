@@ -204,149 +204,149 @@ class CalculationMethod:
             print(row)
 class KarnaughMap:
     def __init__(self, truth_table_obj, form="dnf"):
-        """
-        form: "dnf" - минимизация СДНФ, "knf" - минимизация СКНФ
-        """
         self.tt = truth_table_obj
         self.variables = self.tt.variables
         self.table = self.tt.generate()
-        self.form = form  # "dnf" или "knf"
-    
-    def get_target_value(self):
+        self.form = form.lower()
+
+    def target(self):
         return 1 if self.form == "dnf" else 0
-    
-    def gray(self, n):
-        if n == 1:
-            return [(0,), (1,)]
-        prev = self.gray(n - 1)
+
+    def gray_code(self, n):
+        if n == 0:
+            return [()]
+        prev = self.gray_code(n - 1)
         return [(0,) + x for x in prev] + [(1,) + x for x in reversed(prev)]
-    
+
     def build_map(self):
         n = len(self.variables)
-        row_vars = n // 2
-        col_vars = n - row_vars
-        row_gray = self.gray(row_vars)
-        col_gray = self.gray(col_vars)
-        
-        # Заполняем карту значением, противоположным целевому (для поиска групп)
-        target = self.get_target_value()
-        kmap = [[1-target for _ in range(len(col_gray))] for _ in range(len(row_gray))]
-        
-        for val_dict, r in self.table:
-            if r == target:
-                bits = [val_dict[v] for v in self.variables]
-                row = row_gray.index(tuple(bits[:row_vars]))
-                col = col_gray.index(tuple(bits[row_vars:]))
-                kmap[row][col] = target
-        
+        rows = 1 << ((n + 1) // 2)
+        cols = 1 << (n // 2)
+
+        row_gray = self.gray_code((n + 1) // 2)
+        col_gray = self.gray_code(n // 2)
+
+        t = self.target()
+        kmap = [[1 - t for _ in range(cols)] for _ in range(rows)]
+
+        for vals_dict, res in self.table:
+            if res == t:
+                bits = tuple(vals_dict[v] for v in self.variables)
+                row_bits = bits[:len(row_gray[0])]
+                col_bits = bits[len(row_gray[0]):]
+
+                r_i = row_gray.index(row_bits)
+                c_i = col_gray.index(col_bits)
+                kmap[r_i][c_i] = t
+
         return kmap, row_gray, col_gray
-    
-    def is_valid_group(self, kmap, coords):
-        target = self.get_target_value()
-        return all(kmap[i][j] == target for i, j in coords)
-    
-    def find_groups(self):
-        kmap, row_gray, col_gray = self.build_map()
-        
-        rows, cols = len(kmap), len(kmap[0])
-        
-        sizes = [(4,4), (4,2), (2,4), (2,2), (1,4), (4,1), (1,2), (2,1), (1,1)]
-        
-        used_global = set()
-        groups = []
-        
-        for h, w in sizes:
-            used_local = set()
-            
-            for i in range(rows):
-                for j in range(cols):
-                    coords = set()
-                    
-                    for di in range(h):
-                        for dj in range(w):
-                            r = (i + di) % rows
-                            c = (j + dj) % cols
-                            coords.add((r, c))
-                    
-                    coords = frozenset(coords)
-                    if coords in used_local:
-                        continue
-                    if not self.is_valid_group(kmap, coords):
-                        continue
-                    if coords.issubset(used_global):
-                        continue
-                    groups.append(list(coords))
-                    used_local.add(coords)
-                    used_global.update(coords)
-        
-        return groups, kmap
-    
-    def group_to_term(self, group, row_gray, col_gray):
-        vars = self.variables
-        
-        values = []
-        for i, j in group:
-            values.append(row_gray[i] + col_gray[j])
-        
+
+    def get_minterms(self, kmap):
+        target = self.target()
+        return [
+            (i, j)
+            for i in range(len(kmap))
+            for j in range(len(kmap[0]))
+            if kmap[i][j] == target
+        ]
+
+    def cell_to_bits(self, i, j, row_gray, col_gray):
+        return row_gray[i] + col_gray[j]
+
+    def combine(self, a, b):
+        diff = 0
+        res = []
+
+        for x, y in zip(a, b):
+            if x != y:
+                diff += 1
+                res.append("X")
+            else:
+                res.append(x)
+
+        return tuple(res) if diff == 1 else None
+
+    def build_implicants(self, minterms_bits):
+        current = set(minterms_bits)
+        primes = set()
+
+        while True:
+            used = set()
+            new = set()
+
+            current = list(current)
+
+            for i in range(len(current)):
+                for j in range(i + 1, len(current)):
+                    c = self.combine(current[i], current[j])
+                    if c:
+                        new.add(c)
+                        used.add(current[i])
+                        used.add(current[j])
+
+            for x in current:
+                if x not in used:
+                    primes.add(x)
+
+            if not new:
+                break
+
+            current = new
+
+        return list(primes)
+    def term_to_dict(self, pattern):
         term = {}
-        
-        for idx, var in enumerate(vars):
-            col_vals = [v[idx] for v in values]
-            
-            if all(v == 1 for v in col_vals):
-                term[var] = 1
-            elif all(v == 0 for v in col_vals):
-                term[var] = 0
-            else:
-                term[var] = "X"
-        
-        return term
-    
-    def term_to_str(self, term):
-        result = []
-        for var in self.variables:
-            if term[var] == "X":
+
+        for i, v in enumerate(self.variables):
+            if pattern[i] == "X":
                 continue
+            term[v] = int(pattern[i])
+
+        return term
+
+    def term_to_str(self, term):
+        parts = []
+
+        for v in self.variables:
+            val = term.get(v)
+            if val is None:
+                continue
+
             if self.form == "dnf":
-                if term[var] == 1:
-                    result.append(var)
-                else:
-                    result.append(f"¬{var}")
+                parts.append(v if val == 1 else f"¬{v}")
             else:
-                if term[var] == 0:
-                    result.append(var)
-                else:
-                    result.append(f"¬{var}")
-        
+                parts.append(v if val == 0 else f"¬{v}")
+
+        if not parts:
+            return "1" if self.form == "dnf" else "0"
+
         if self.form == "dnf":
-            return "(" + "".join(result) + ")"
+            return "".join(parts)
         else:
-            return "(" + "∨".join(result) + ")"
-    
+            return "(" + "∨".join(parts) + ")"
+
     def minimize(self):
-        groups, kmap = self.find_groups()
         kmap, row_gray, col_gray = self.build_map()
-        
-        form_name = "СДНФ" if self.form == "dnf" else "СКНФ"
-        print(f"\nКарта Карно для {form_name}:")
-        self.print_map(kmap)
-        
-        print(f"\nГруппы Карно для {form_name}:")
-        terms = []
-        for g in groups:
-            print(g)
-            term = self.group_to_term(g, row_gray, col_gray)
-            terms.append(term)
-        
-        print(f"\nМинимальная {form_name}:")
-        if self.form == "dnf":
-            result = " ∨ ".join(self.term_to_str(t) for t in terms)
-        else:
-            result = " & ".join(self.term_to_str(t) for t in terms)
-        print(result)
-        
-        return terms
-    
-    def print_map(self, kmap):
+
+        print("\n=== Карта Карно ===")
         for row in kmap:
-            print(row)
+            print([str(x) for x in row])
+
+        minterms = self.get_minterms(kmap)
+
+        minterms_bits = [
+            self.cell_to_bits(i, j, row_gray, col_gray)
+            for i, j in minterms
+        ]
+        primes = self.build_implicants(minterms_bits)
+
+        terms = [self.term_to_dict(p) for p in primes]
+
+        print("\n=== Минимальная форма ===")
+
+        joiner = " ∨ " if self.form == "dnf" else " ∧ "
+        result = joiner.join(self.term_to_str(t) for t in terms)
+
+        print(result)
+
+        return terms
