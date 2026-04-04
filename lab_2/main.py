@@ -71,26 +71,29 @@ def main():
                 
         elif choice == "8":
             bd = BooleanDerivative(tt)
+
             print("\nПеременные:", ", ".join(tt.variables))
             var = input("Введите переменную для производной: ")
-            vector, formula = bd.partial_with_formula(var)
-            simplified = bd.simplify_derivative(var)
+
+            vector = bd.partial_derivative(var)          
+            simplified = bd.simplify_derivative(var)     
+            compressed = bd.compress_vector(vector, var)
+
             print("\n--- Частная производная ---")
-            print("Вектор:", vector)
+            print("Вектор:", compressed)
             print("Формула:", simplified)
-            
         elif choice == "9":
             bd = BooleanDerivative(tt)
             print("\nПеременные:", ", ".join(tt.variables))
-            vars_input = input("Введите переменные для смешанной производной (через пробел): ")
-            vars_list = vars_input.split()
-    
-            vector, formula = bd.mixed_derivative(vars_list)
-    
+            vars_list = input("Введите переменные через пробел: ").split()
+            vector, _ = bd.mixed_derivative(vars_list)
+            simplified = bd.simplify_derivative(vars_list=vars_list)
+            compressed = bd.compress_vector_multi(vector, vars_list)
             print("\n--- Смешанная производная ---")
-            derivative_str = "∂" + "".join(vars_list) + "f/∂" + "∂".join(vars_list)
-            print("Вектор:", vector)
-            print("Формула:", bd.simplify_derivative(vars_list=vars_list))
+            derivative_str = f"∂^{len(vars_list)}f/" + "".join(f"∂{v}" for v in vars_list)
+            print(derivative_str)
+            print("Вектор:", compressed)
+            print("Формула:", simplified)
             
         elif choice == "10":
             print("\nВыберите форму минимизации:")
@@ -129,19 +132,14 @@ def main():
             print("\nВыберите форму минимизации:")
             print("1 - СДНФ (Дизъюнктивная форма)")
             print("2 - СКНФ (Конъюнктивная форма)")
+
             form_choice = input("> ")
-            form = "dnf" if form_choice == "1" else "knf" if form_choice == "2" else "dnf"
-            
+            form = "dnf" if form_choice == "1" else "knf"
+
             km = KarnaughMap(tt, form)
-            terms = km.minimize()
-            
-            if form == "dnf":
-                result = " ∨ ".join(km.term_to_str(t) for t in terms)
-            else:
-                result = " & ".join(km.term_to_str(t) for t in terms)
-            
-            print(f"\nМинимизированная функция ({'ДНФ' if form == 'dnf' else 'КНФ'}):")
-            print(result)
+
+            print("\nРезультат минимизации:")
+            km.minimize()
             
         elif choice == "0":
             print("Выход из программы.")
