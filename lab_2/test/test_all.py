@@ -226,75 +226,6 @@ def test_remove_redundant(tt):
     result = cm.remove_redundant(terms)
     assert isinstance(result, list)
 
-def test_kmap_build_dnf(tt):
-    km = KarnaughMap(tt, form="dnf")
-    kmap, row, col = km.build_map()
-    assert isinstance(kmap, list)
-
-def test_kmap_build_knf(tt_sknf):
-    km = KarnaughMap(tt_sknf, form="knf")
-    kmap, row, col = km.build_map()
-    assert isinstance(kmap, list)
-
-def test_kmap_groups_dnf(tt):
-    km = KarnaughMap(tt, form="dnf")
-    groups, _ = km.find_groups()
-    assert isinstance(groups, list)
-
-def test_kmap_groups_knf(tt_sknf):
-    km = KarnaughMap(tt_sknf, form="knf")
-    groups, _ = km.find_groups()
-    assert isinstance(groups, list)
-
-def test_kmap_minimize_dnf(tt):
-    km = KarnaughMap(tt, form="dnf")
-    terms = km.minimize()
-    assert isinstance(terms, list)
-
-def test_kmap_minimize_knf(tt_sknf):
-    km = KarnaughMap(tt_sknf, form="knf")
-    terms = km.minimize()
-    assert isinstance(terms, list)
-
-def test_kmap_group_to_term_dnf(tt):
-    km = KarnaughMap(tt, form="dnf")
-    kmap, row_gray, col_gray = km.build_map()
-    groups, _ = km.find_groups()
-    if groups:
-        term = km.group_to_term(groups[0], row_gray, col_gray)
-        assert isinstance(term, dict)
-
-def test_kmap_term_to_str_dnf(tt):
-    km = KarnaughMap(tt, form="dnf")
-    term = {"a": 1, "b": "X"}
-    result = km.term_to_str(term)
-    assert isinstance(result, str)
-
-def test_kmap_term_to_str_knf(tt_sknf):
-    km = KarnaughMap(tt_sknf, form="knf")
-    term = {"a": 0, "b": "X"}
-    result = km.term_to_str(term)
-    assert isinstance(result, str)
-
-def test_kmap_gray_code():
-    km = KarnaughMap(TruthTable("a & b"))
-    gray = km.gray(2)
-    assert len(gray) == 4
-    assert gray[0] == (0, 0)
-    assert gray[3] == (1, 0)
-
-
-def test_kmap_is_valid_group_knf(tt_sknf):
-    km = KarnaughMap(tt_sknf, form="knf")
-    kmap, _, _ = km.build_map()
-    coords = [(0, 0)]
-    assert km.is_valid_group(kmap, coords) is True or False
-
-def test_kmap_print_map(tt):
-    km = KarnaughMap(tt, form="dnf")
-    kmap, _, _ = km.build_map()
-    km.print_map(kmap)
-
 def test_post_classes(tt):
     pc = PostClasses(tt)
     res = pc.check_all()
@@ -369,3 +300,93 @@ def test_simplify_partial_derivative():
     assert simplified == "(!b)" or simplified == "(b)"  
     simplified = bd.simplify_derivative(var="b")
     assert "a" in simplified or "!a" in simplified
+def test_karnaugh_gray_code():
+    cm = KarnaughMap(TruthTable("a & b"))
+    assert cm.gray_code(0) == [()]
+    assert len(cm.gray_code(2)) == 4
+
+
+def test_karnaugh_build_map_shape():
+    cm = KarnaughMap(TruthTable("a & b"))
+
+    kmap, row_gray, col_gray = cm.build_map()
+
+    assert isinstance(kmap, list)
+    assert len(kmap) > 0
+    assert len(kmap[0]) > 0
+    assert isinstance(row_gray, list)
+    assert isinstance(col_gray, list)
+
+
+def test_karnaugh_get_minterms():
+    cm = KarnaughMap(TruthTable("a & b"))
+
+    kmap, _, _ = cm.build_map()
+    mins = cm.get_minterms(kmap)
+
+    assert isinstance(mins, list)
+
+
+def test_karnaugh_cell_to_bits():
+    cm = KarnaughMap(TruthTable("a & b"))
+
+    row_gray = cm.gray_code(1)
+    col_gray = cm.gray_code(1)
+
+    bits = cm.cell_to_bits(0, 0, row_gray, col_gray)
+
+    assert isinstance(bits, tuple)
+
+
+def test_karnaugh_combine_success():
+    cm = KarnaughMap(TruthTable("a & b"))
+
+    a = ("0", "1")
+    b = ("0", "0")
+
+    res = cm.combine(a, b)
+
+    assert res is not None
+    assert "X" in res
+
+
+def test_karnaugh_combine_fail():
+    cm = KarnaughMap(TruthTable("a & b"))
+
+    a = ("0", "1")
+    b = ("1", "0")
+
+    assert cm.combine(a, b) is None
+
+
+def test_karnaugh_build_implicants():
+    cm = KarnaughMap(TruthTable("a & b"))
+
+    minterms = [("0", "1"), ("0", "0")]
+    primes = cm.build_implicants(minterms)
+
+    assert isinstance(primes, list)
+
+
+def test_karnaugh_minimize_runs():
+    cm = KarnaughMap(TruthTable("a & b"))
+
+    result = cm.minimize()
+
+    assert isinstance(result, list)
+
+
+def test_karnaugh_minimize_complex():
+    cm = KarnaughMap(TruthTable("(a & b) | (!a & b) | (a & !b)"))
+
+    result = cm.minimize()
+
+    assert isinstance(result, list)
+
+
+def test_karnaugh_single_variable():
+    cm = KarnaughMap(TruthTable("a"))
+
+    result = cm.minimize()
+
+    assert isinstance(result, list)
