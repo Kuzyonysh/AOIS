@@ -24,7 +24,7 @@ class IntegerNumber:
     def conversion_to_binary_inversion(n):
         bits = IntegerNumber.conversion_to_binary_straight(abs(n))
 
-        if n > 0:
+        if n >= 0:
             return bits
 
         for i in range(32):
@@ -35,7 +35,7 @@ class IntegerNumber:
     @staticmethod
     def conversion_to_binary_additional(n):
 
-        if n > 0:
+        if n >= 0:
             return IntegerNumber.conversion_to_binary_straight(n)
 
         bits = IntegerNumber.conversion_to_binary_inversion(n)
@@ -48,6 +48,7 @@ class IntegerNumber:
             carry = s // 2
 
         return bits
+
     @staticmethod
     def negate_additional(bits):
 
@@ -74,7 +75,7 @@ class IntegerNumber:
         power = 0
 
         for i in range(31, 0, -1):
-            value += bits[i] * (2 ** power)
+            value += bits[i] * (2**power)
             power += 1
 
         if sign == 1:
