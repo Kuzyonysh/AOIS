@@ -1,9 +1,41 @@
 from HashTable import HashTable
 from TablePrinter import TablePrinter
+from exception import KeyExistsError, TableFullError, KeyNotFoundError
+
+
 class Menu:
     def __init__(self):
         self.hash_table = HashTable()
         self.printer = TablePrinter()
+        self.preload_data()
+
+    def preload_data(self):
+        data = [
+            ("Иванов", "Математика"),
+            ("Петров", "Физика"),
+            ("Сидоров", "Информатика"),
+            ("Смирнов", "Математика"),
+            ("Кузнецов", "Химия"),
+            ("Попов", "Биология"),
+            ("Васильев", "Математика"),
+            ("Новиков", "Физика"),
+            ("Федоров", "Информатика"),
+            ("Морозов", "Математика"),
+            ("Титов", "Физика"),
+            ("Орлов", "Химия"),
+            ("Белов", "Биология"),
+            ("Громов", "Информатика"),
+            ("Зайцев", "Математика")
+        ]
+
+        print(">>> Предзагрузка данных...\n")
+
+        for key, value in data:
+            try:
+                print(f"Добавляем: {key} → {value}")
+                self.hash_table.insert(key, value)
+            except Exception as e:
+                print(f"Ошибка при добавлении {key}: {e}")
 
     def run(self):
         while True:
@@ -41,30 +73,72 @@ class Menu:
     def insert(self):
         key = input("Введите ключ (фамилия): ")
         value = input("Введите значение: ")
-        self.hash_table.insert(key, value)
+
+        try:
+            self.hash_table.insert(key, value)
+            print("Запись добавлена")
+
+        except KeyExistsError as e:
+            print("Ошибка:", e)
+
+        except TableFullError as e:
+            print("Ошибка:", e)
+
+        except Exception as e:
+            print("Неизвестная ошибка:", e)
 
     def search(self):
         key = input("Введите ключ: ")
-        result = self.hash_table.get(key)
-        if result is None:
-            print("Не найдено")
-        else:
-            print("Найдено:", result)
+
+        try:
+            result = self.hash_table.get(key)
+            if result is None:
+                print("Не найдено")
+            else:
+                print("Найдено:", result)
+
+        except Exception as e:
+            print("Ошибка:", e)
 
     def update(self):
         key = input("Введите ключ: ")
         value = input("Введите новое значение: ")
-        self.hash_table.update(key, value)
+
+        try:
+            self.hash_table.update(key, value)
+            print("Обновлено")
+
+        except KeyNotFoundError as e:
+            print("Ошибка:", e)
+
+        except Exception as e:
+            print("Ошибка:", e)
 
     def delete(self):
         key = input("Введите ключ: ")
-        self.hash_table.delete(key)
+
+        try:
+            self.hash_table.delete(key)
+            print("Удалено")
+
+        except KeyNotFoundError as e:
+            print("Ошибка:", e)
+
+        except Exception as e:
+            print("Ошибка:", e)
 
     def display(self):
-        self.printer.print_table(self.hash_table)
+        try:
+            self.printer.print_table(self.hash_table)
+        except Exception as e:
+            print("Ошибка:", e)
 
     def load_factor(self):
-        print("Коэффициент заполнения:", self.hash_table.load_factor())
+        try:
+            print("Коэффициент заполнения:", self.hash_table.load_factor())
+        except Exception as e:
+            print("Ошибка:", e)
+
 
 if __name__ == "__main__":
     menu = Menu()
