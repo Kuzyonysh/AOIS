@@ -36,8 +36,7 @@ class HashTable:
                 continue
 
             if cell.key == key:
-                if not cell.deleted:
-                    raise KeyExistsError(f"Ключ '{key}' уже существует")
+                raise KeyExistsError(f"Ключ '{key}' уже существует")
 
             collision = True
         if first_deleted_index is not None:
@@ -97,11 +96,11 @@ class HashTable:
 
             if cell.key == key:
                 cell.D = 1
+                cell.C = 0
                 cell.U = 0
                 return
 
         raise KeyNotFoundError(f"Ключ '{key}' не найден")
-
 
     def load_factor(self):
         count = sum(1 for x in self.table if x is not None and not x.deleted)
